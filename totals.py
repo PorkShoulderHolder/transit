@@ -69,13 +69,13 @@ def get_totals(station, trains=None):
         f.close()
     return str([a - b for (a, b) in zip(e1, e2)]).replace("[", ",").replace("]", "").replace(" ", "")
 
+print("station,entrances,exits,totals")
 print get_totals("MYRTLE-WYCKOFF")
 
 # if station name is not unique we must also specify the trains that arrive there,
 # otherwise we are counting multiple stations
 print get_totals("DEKALB AV", "L")
 print get_totals("HALSEY ST", "L")
-
 print get_totals("SENECA AVE")
 print get_totals("KNICKERBOCKER")
 print get_totals("TIMES SQ-42 ST")
