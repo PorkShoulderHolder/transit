@@ -39,7 +39,6 @@ def get_total_entries(data, p=False):
     recent_date = get_recent_elements(data)
     permissible_times = list(set(data[:, 7].tolist()))
     permissible_times.sort()
-    # print "permissible times: " + str(permissible_times)
     def_time = permissible_times[0]
     f1 = data[np.where(data[:, 6] == recent_date)]
     f2 = f1[np.where(f1[:, 7] == def_time)]
