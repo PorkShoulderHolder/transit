@@ -81,8 +81,6 @@ def get_entries(data, tfrom, tto, take_last=False, stds = 0.01):
 def get_total_entries(data, p=False):
     recent_date = get_recent_elements(data)
 
-    # print "permissible times: " + str(permissible_times)
-
     f1 = data[np.where(data[:, 6] == recent_date)]
     permissible_times = list(set(f1[:, 7].tolist()))
     permissible_times.sort()
