@@ -1,4 +1,3 @@
-import csv
 import sys
 import numpy as np
 from datetime import datetime as dt
@@ -7,20 +6,38 @@ from datetime import timedelta
 import pandas as pd
 import datetime
 from time import mktime
+import jellyfish as fish
 import matplotlib.pyplot as plt
-
-
 
 def get_devices(lines):
     return lines[:, 2]
 
+#
+# def make_node_csv(x):
+#     make_id = lambda x: "".join([str(ord(i)) for i in x])
+#     output_str = "station_name,line,entrances,exits,net_contribution,latitude,longitude,Id\n"
+#     codes = set()
+#     for i, K in enumerate(x.ENTRIES.keys()):
+#         a = "".join(K[1]).replace("'", "").replace(",", "").replace(" ", "").replace("[","").replace("]","")
+#         latlng = closest_match_neighbors(K[0] + "_" + a)
+#         codes.add(latlng[3])
+#         out = K[0] + "_" + a + "," + a + "," + str(x.ENTRIES[i]) + "," + str(x.EXITS[i]) + "," + str(x.NET[i]) + "," +\
+#             str(latlng[1]) + "," + str(latlng[2]) + "," + str(latlng[3])
+#         if i < len(x.ENTRIES.keys()) - 1:
+#             out += "\n"
+#         output_str += out
+#     print len(list(codes)) / float(len(x.ENTRIES.keys()))
+#     return output_str
+
+# def cache_full(x, fn="data/cleaned_nodes.csv"):
+#     csv_str = make_node_csv(x)
+#     with open(fn, "w+") as f:
+#         f.write(csv_str)
+#         f.close()
+#     print "saved vertex data to " + fn
 
 def get_exits(lines):
     return lines[:, -1]
-
-
-def get_entries(lines):
-    return lines[:, -2]
 
 
 def get_stations(data, name, trains=None):
@@ -29,54 +46,54 @@ def get_stations(data, name, trains=None):
         f1 = f1[np.where(f1[:, 4] == trains)]
     return f1
 
-
-def get_datetime(line):
-    pass
-
-
 def get_recent_elements(data):
     dates = set(data[:, 6].tolist())
-    times =  set(data[:, 7].tolist())
     ts = [(mktime(dt.strptime(d, '%m/%d/%Y').timetuple()), d) for d in dates]
     ts.sort()
-    # print sorted(list(times))
     return ts[-1][1]
 
 
-def get_cdf(data, interval=20):
-    s= datetime.datetime(1,1,1,0,0,0)
+def get_windows(data, windows):
+    s = datetime.datetime(1, 1, 1, 0, 0, 0)
     output = []
-    t = 0
-    while (s+timedelta(minutes=t)).day == 1:
-        n1 = get_entries(data, s.time(), (s + timedelta(minutes=t)).time(), take_last=True, stds=4)
-        output.append(n1.ENTRIES)
-        t += interval
-    output = np.array(output[4:])
-    output = np.vstack((np.zeros(output.shape)[0:4], output))
+    ts = windows
+    for t in ts:
+        start = (s + timedelta(minutes=t[0])).time()
+        finish = (s + timedelta(minutes=t[1])).time()
+        n1 = get_entries(data, start, finish, take_last=True, stds=4)
+        output.append(n1)
+    return output
 
-    return output.transpose()
+
+def replace_ids(group):
+    mean, std = group.mean(), group.std()
+    outliers = (group - mean).abs() > 5 * std
+    group[outliers] = np.nan
+    return group
+
+
+def replace(group):
+    mean, std = group.mean(), group.std()
+    outliers = (group - mean).abs() > 2 * std
+    group[outliers] = group[~outliers].mean()
+    return group
 
 
 def get_entries(data, tfrom, tto, take_last=False, stds = 0.01):
-
     ix = data.index.indexer_between_time(tfrom, tto)
     inrange = data.ix[ix]
-    devices = inrange.groupby(["UNIT", "SCP", "STATION", "weekday"])
-
-    print "003"
+    devices = inrange.groupby(["UNIT", "SCP", "STATION", "weekday", "LINENAME", "DIVISION"])
     diffed = devices.ENTRIES.apply(lambda x: x[-1] - x[0])
     diffed[diffed < 0] = np.nan
-    diffed[np.abs(diffed - diffed.mean()) > stds * diffed.std()] = np.nan
-    # def replace(x):
-    #     print(x)
-    #
-    #     return x
-    # with_nans = diffed.apply(lambda x: replace(x))
+    new_vals = diffed.reset_index().groupby(["STATION", "LINENAME"]).transform(replace)
 
-    # print "002"
-    cleaned = diffed.fillna(method='pad').reset_index()
-    # print "004"
-    return cleaned.groupby(["STATION"]).sum()
+    for i, k in enumerate(diffed.keys()):
+        diffed[k] = new_vals.ENTRIES[i]
+
+    cleaned = diffed.fillna(method='pad')
+    out = cleaned.reset_index().groupby(["STATION", "LINENAME"]).sum()
+    return out
+
 
 def get_total_entries(data, p=False):
     recent_date = get_recent_elements(data)
@@ -105,6 +122,7 @@ def filter_data_interval(data, t, interval):
     assert start.hour <= end.hour
     return filtered
 
+
 def get_totals_interval(data, start=dtime(5, 0, 0), finish=dtime(16, 0, 0), interval=timedelta(hours=3)):
     """
     :param data : expected to be filtered for a single station already
@@ -121,11 +139,9 @@ def get_totals_interval(data, start=dtime(5, 0, 0), finish=dtime(16, 0, 0), inte
         in_total_morn = np.sum(filtered_morning[:, -2].astype(int))
         in_total_eve = np.sum(filtered_evening[:, -2].astype(int))
 
-def get_commute_io(data):
-    pass
-
 
 def station_query_format(station, trains):
+    sys.stdout.write(station)
     sys.stdout.write(station)
     sys.stdout.flush()
     if trains:
@@ -146,19 +162,8 @@ def get_weekly_totals(lines_fin, lines_start, station, trains=None):
 
 def get_commute_totals(lines, station, trains=None):
     station_query_format(station, trains)
-    lines_for_station = get_stations(lines, station, trains)
-
-
     print get_stations(lines, station, trains)
 
-#
-# with open(sys.argv[1]) as f:
-#     lines_f = np.array([l for l in csv.reader(f)][1:])
-#     f.close()
-# with open(sys.argv[2]) as f:
-#     lines_s = np.array([l for l in csv.reader(f)][1:])
-#     f.close()
-#
 
 def iter_weekly_stations(lines_f, lines_s):
     station_strs = lines_s[:, 3:5].tolist()
@@ -187,23 +192,75 @@ def iter_commute_totals(lines):
             print get_commute_totals(lines, s[0])
 
 
-#print("station,entrances,exits,totals")
-#
+def balance(lesser, greater):
+    lesser_sum = np.sum(lesser.ENTRIES)
+    greater_sum = np.sum(greater.ENTRIES)
+    count = greater_sum - lesser_sum
+    ps = lesser.ENTRIES / lesser_sum
+    correction = np.random.multinomial(count, ps, 1)[0]
+    lesser.ENTRIES = lesser.ENTRIES + correction
+    return lesser
 
-def do_dit():
+
+def read_data():
+    print "reading turnstile data"
     data = pd.read_csv(sys.argv[1] if len(sys.argv) > 1 else "data/turnstile_160507.txt")
     data.index= pd.to_datetime((data.DATE.apply(str) + "-" + data.TIME.apply(str)).apply(str), format="%m/%d/%Y-%H:%M:%S")
     data["weekday"] = data.index.dayofweek
+    data["LINENAME"] = data["LINENAME"].map(lambda x: "".join(sorted(x)))
+    return data
 
-    a = get_cdf(data, 60)
 
-    for d in a:
-        plt.scatter(np.diff(d), np.array(xrange(len(d)-1)), c='k', alpha=0.04)
-    m = np.diff(np.mean(a, axis=0))
-    plt.bar(m, np.array(xrange(len(m))), alpha=1)
-    plt.show()
+def clean_data(data):
+    data = data[data.DIVISION != "PTH"]
+    data = data[data.weekday < 5]
+    return data
 
-do_dit()
+
+def compute_commute(plot=False):
+    data = read_data()
+    data = clean_data(data)
+    interval_data = get_windows(data, [(0*60, 17 * 60), (17 * 60, 24 * 60)])
+    s = np.sum([interval_data[0].ENTRIES, interval_data[1].ENTRIES], axis=1)
+    if s[0] > s[1]:
+        interval_data[1] = balance(lesser=interval_data[1], greater=interval_data[0])
+    else:
+        interval_data[0] = balance(lesser=interval_data[0], greater=interval_data[1])
+
+    if plot:
+        for d in interval_data:
+            plt.plot(d.ENTRIES, c='k', alpha=0.4)
+
+    m = np.mean([interval_data[0].ENTRIES, interval_data[1].ENTRIES], axis=1)
+    interval_data[0]["EXITS"] = interval_data[1].ENTRIES
+    interval_data[0]["NET"] = interval_data[0].ENTRIES - interval_data[1].ENTRIES
+    if plot:
+        plt.plot(m, alpha=1)
+        plt.show()
+    return interval_data[0].reset_index()
+
+
+def main():
+    commute_data = compute_commute()
+    #cache_full(commute_data)
+    return commute_data
+_commute_data = main()
+
+
+def commuter_matching(search):
+    def lines_in_common(x):
+        return sum(x.LINENAME.count(c) for c in search.trains) / float(max(len(x.LINENAME), len(search.trains)))
+
+    def d(x):
+        stops_name_sim = fish.jaro_winkler(unicode(x.STATION.lower()), unicode(search.stop_name.lower()))
+        se_name_sim = fish.jaro_winkler(unicode(x.STATION.lower()), unicode(search.Station_Name.lower()))
+        lic = lines_in_common(x)
+        return stops_name_sim + se_name_sim + lic
+
+    similarity = _commute_data.apply(d, axis=1)
+    i = np.argmax(similarity)
+    return _commute_data.iloc[i], similarity[i]
+
 
 # if station name is not unique we must also specify the trains that arrive there,
 # otherwise we are counting multiple stations
