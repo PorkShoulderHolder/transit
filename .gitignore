@@ -3,4 +3,4 @@
 *.txt
 *.pyc
 data
-.gephi
+*.gephi
