@@ -9,32 +9,10 @@ from time import mktime
 import jellyfish as fish
 import matplotlib.pyplot as plt
 
+
 def get_devices(lines):
     return lines[:, 2]
 
-#
-# def make_node_csv(x):
-#     make_id = lambda x: "".join([str(ord(i)) for i in x])
-#     output_str = "station_name,line,entrances,exits,net_contribution,latitude,longitude,Id\n"
-#     codes = set()
-#     for i, K in enumerate(x.ENTRIES.keys()):
-#         a = "".join(K[1]).replace("'", "").replace(",", "").replace(" ", "").replace("[","").replace("]","")
-#         latlng = closest_match_neighbors(K[0] + "_" + a)
-#         codes.add(latlng[3])
-#         out = K[0] + "_" + a + "," + a + "," + str(x.ENTRIES[i]) + "," + str(x.EXITS[i]) + "," + str(x.NET[i]) + "," +\
-#             str(latlng[1]) + "," + str(latlng[2]) + "," + str(latlng[3])
-#         if i < len(x.ENTRIES.keys()) - 1:
-#             out += "\n"
-#         output_str += out
-#     print len(list(codes)) / float(len(x.ENTRIES.keys()))
-#     return output_str
-
-# def cache_full(x, fn="data/cleaned_nodes.csv"):
-#     csv_str = make_node_csv(x)
-#     with open(fn, "w+") as f:
-#         f.write(csv_str)
-#         f.close()
-#     print "saved vertex data to " + fn
 
 def get_exits(lines):
     return lines[:, -1]
@@ -45,6 +23,7 @@ def get_stations(data, name, trains=None):
     if trains is not None:
         f1 = f1[np.where(f1[:, 4] == trains)]
     return f1
+
 
 def get_recent_elements(data):
     dates = set(data[:, 6].tolist())
@@ -79,7 +58,7 @@ def replace(group):
     return group
 
 
-def get_entries(data, tfrom, tto, take_last=False, stds = 0.01):
+def get_entries(data, tfrom, tto, take_last=False, stds=0.01):
     ix = data.index.indexer_between_time(tfrom, tto)
     inrange = data.ix[ix]
     devices = inrange.groupby(["UNIT", "SCP", "STATION", "weekday", "LINENAME", "DIVISION"])
@@ -157,7 +136,9 @@ def get_weekly_totals(lines_fin, lines_start, station, trains=None):
     e2 = get_total_entries(mw)
     if e1[-1] != e2[-1]:
         return "na,na,na"
-    return str([float(a) - float(b) for (a, b) in zip(e1[:-1], e2[:-1])]).replace("[", ",").replace("]", "").replace(" ", "")
+    differences = str([float(a) - float(b) for (a, b) in zip(e1[:-1], e2[:-1])])
+    clean_differences = differences.replace("[", ",").replace("]", "").replace(" ", "")
+    return clean_differences
 
 
 def get_commute_totals(lines, station, trains=None):
@@ -205,7 +186,8 @@ def balance(lesser, greater):
 def read_data():
     print "reading turnstile data"
     data = pd.read_csv(sys.argv[1] if len(sys.argv) > 1 else "data/turnstile_160507.txt")
-    data.index= pd.to_datetime((data.DATE.apply(str) + "-" + data.TIME.apply(str)).apply(str), format="%m/%d/%Y-%H:%M:%S")
+    new_dates = data.DATE.apply(str) + "-" + data.TIME.apply(str)
+    data.index= pd.to_datetime(new_dates.apply(str), format="%m/%d/%Y-%H:%M:%S")
     data["weekday"] = data.index.dayofweek
     data["LINENAME"] = data["LINENAME"].map(lambda x: "".join(sorted(x)))
     return data
@@ -242,8 +224,8 @@ def compute_commute(plot=False):
 
 def main():
     commute_data = compute_commute()
-    #cache_full(commute_data)
     return commute_data
+
 _commute_data = main()
 
 
@@ -261,22 +243,3 @@ def commuter_matching(search):
     i = np.argmax(similarity)
     return _commute_data.iloc[i], similarity[i]
 
-
-# if station name is not unique we must also specify the trains that arrive there,
-# otherwise we are counting multiple stations
-
-#
-# print get_weekly_totals(lines_f, lines_s, "MYRTLE-WYCKOFF")
-# print get_weekly_totals(lines_f, lines_s, "DEKALB AV", "L")
-# print get_weekly_totals(lines_f, lines_s, "HALSEY ST", "L")
-# print get_weekly_totals(lines_f, lines_s, "SENECA AVE")
-# print get_weekly_totals(lines_f, lines_s, "KNICKERBOCKER")
-# print get_weekly_totals(lines_f, lines_s, "TIMES SQ-42 ST")
-# print get_weekly_totals(lines_f, lines_s, "BERGEN ST")
-# print get_weekly_totals(lines_f, lines_s, "CARROLL ST")
-# print get_weekly_totals(lines_f, lines_s, "JEFFERSON ST")
-# print get_weekly_totals(lines_f, lines_s, "CENTRAL AV")
-# print get_weekly_totals(lines_f, lines_s, "FOREST AVE")
-
-# iter_weekly_stations(lines_f, lines_s)
-#iter_commute_totals(lines_s)

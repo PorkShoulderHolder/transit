@@ -1,19 +1,18 @@
 __author__ = 'sam.royston'
-__author__ = 'sam.royston'
-import pandas as pd
-import csv
-from datetime import datetime as dt
-import numpy as np
-import editdistance as lev
+
 import jellyfish as fish
-import sys
 from geopy.distance import great_circle
-from station_locations import *
+from station_locations import closest_match_latlng
+from turnstiles import commuter_matching
+import pandas as pd
+import numpy as np
+
 
 def print_all(x):
     pd.set_option('display.max_rows', len(x))
     print(x.to_csv(None, index=False ))
     pd.reset_option('display.max_rows')
+
 
 def read_file(filename):
     print "opening " + filename
@@ -146,15 +145,14 @@ def lat_lng_distances(lat_lng, entrance_data):
 
 
 def closest_match_neighbors(search_name):
-    d = lambda x: fish.jaro_winkler(unicode(x.stop_name.lower()),
-        unicode(search_name.lower())) + 100 * (x.parent_station[0] in search_name.split("_")[-1])
+    line_penalty = 100 * (x.parent_station[0] in search_name.split("_")[-1])
+    d = lambda x: fish.jaro_winkler(unicode(x.stop_name.lower()), unicode(search_name.lower())) + line_penalty
     distances = _data.apply(d, axis=1)
     i = np.argmax(distances)
     return _data.stop_name[i], _data.stop_lat[i], _data.stop_lon[i], _data.parent_station[i]
 
 _name_key, _data = clean_stops_file(read_file("data/google_transit/stops.txt"))
 cache_connections_data()
-from totals import commuter_matching
 merged = merge_stops_entrances(_data)
 final = merge_turnstile_info(merged)
 final["Id"] = final.parent_station
