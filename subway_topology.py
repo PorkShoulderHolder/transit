@@ -112,6 +112,7 @@ def clean_stoptimes_file(data):
     out["distances"] = out.apply(lambda x: get_ids_distance(str(x.source), str(x.target)), axis=1)
     out = out[out.distances < 6500.0]
     out = out[out.distances > 0]
+    out["is_transfer"] = np.zeros(len(out))
     return out
 
 
@@ -135,8 +136,9 @@ def merge_turnstile_info(data):
 
 def cache_connections_data(fn="data/cleaned_connections.csv"):
     print "computing edge topology"
-    _stops_data = clean_stoptimes_file(read_file("data/google_transit/stop_times.txt"))
-    _stops_data.to_csv("data/cleaned_connections.csv", index=False)
+    stops_data = clean_stoptimes_file(read_file("data/google_transit/stop_times.txt"))
+    # stops_data.to_csv("data/cleaned_connections.csv", index=False)
+    return stops_data
 
 
 def lat_lng_distances(lat_lng, entrance_data):
@@ -152,12 +154,17 @@ def closest_match_neighbors(search_name):
     return _data.stop_name[i], _data.stop_lat[i], _data.stop_lon[i], _data.parent_station[i]
 
 _name_key, _data = clean_stops_file(read_file("data/google_transit/stops.txt"))
-cache_connections_data()
+_stops_data = cache_connections_data()
 merged = merge_stops_entrances(_data)
 final = merge_turnstile_info(merged)
 final["Id"] = final.parent_station
 final["latitude"] = final.stop_lat
 final["longitude"] = final.stop_lon
 final["Label"] = final.apply(lambda x: x.stop_name + "_" + x.LINENAME, axis=1)
-final.to_csv("data/cleaned_nodes.csv")
 
+
+def get_topology():
+    if final is not None and _stops_data is not None:
+        return final, _stops_data
+    else:
+        raise LookupError("not finished processing")

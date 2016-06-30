@@ -6,7 +6,6 @@ import cmath
 import editdistance as lev
 from geopy.distance import great_circle
 
-
 def print_all(x):
     pd.set_option('display.max_rows', len(x))
     print(x.to_string(index=False))
@@ -64,6 +63,5 @@ def closest_match_name(search_name):
     distances = _data_s.Station_Name.map(d)
     i = np.argmin(distances)
     return _data_s.Station_Name[i], _data_s.Station_Latitude[i], _data_s.Station_Longitude[i]
-
 
 

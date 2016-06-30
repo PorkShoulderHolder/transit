@@ -195,7 +195,7 @@ def read_data():
 
 def clean_data(data):
     data = data[data.DIVISION != "PTH"]
-    data = data[data.weekday < 5]
+    data = data[data.weekday >= 5]
     return data
 
 

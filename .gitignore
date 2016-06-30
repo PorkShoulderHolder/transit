@@ -1,6 +1,6 @@
 .idea
-*.csv
-*.txt
+.DS_Store
+build
+dist
+gexdat.egg-info
 *.pyc
-data
-*.gephi
