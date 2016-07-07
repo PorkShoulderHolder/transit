@@ -4,3 +4,8 @@ build
 dist
 gexdat.egg-info
 *.pyc
+*.pdf
+*.txt
+*.csv
+*.gephi
+data
