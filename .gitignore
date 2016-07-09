@@ -9,3 +9,5 @@ gexdat.egg-info
 *.csv
 *.gephi
 data
+turnstile_data
+mta_data
