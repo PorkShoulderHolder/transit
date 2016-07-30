@@ -11,7 +11,7 @@ util file functions
 
 
 def get_connections():
-    with open("../data/connections_basic.csv") as f:
+    with open("../data/cleaned_connections.csv") as f:
         fieldnames = ("source", "target", "flow", "travel_time")
         reader = csv.DictReader(f)
         out = [row for row in reader]

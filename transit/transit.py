@@ -1,11 +1,10 @@
 __author__ = 'sam.royston'
 from optimal_transport import compute, compute_costs
-from postprocessing import add_transfer_edges, package_input
+from data_munge.postprocessing import add_transfer_edges, package_input
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial import Voronoi
 import pandas as pd
-from subway_topology import get_topology
+from data_munge.subway_topology import get_topology
 
 
 def switch_src_target(df):

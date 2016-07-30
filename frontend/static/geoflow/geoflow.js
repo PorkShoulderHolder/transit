@@ -93,7 +93,6 @@ FlowSystem.prototype.update = function(){
     var d = new Date;
     this.paths.forEach(function(path){
         path.t += ((d) - self.last_update) * self.speed;
-//        if(path.t > 1) path.t = 0;
         path.update(self.speed);
         path.dots.forEach(function(dot){
             pos.push(dot.position);
