@@ -34,8 +34,8 @@ class UpdateManager(object):
             if ".gz" != fp[-3:]:
                 os.system("rm " + fp)
 
-    def synch_dir(self, ls):
-        ls = filter(lambda x: self.get_year(x['href']) > self.start_yr, ls)
+    def synch_dir(self):
+        ls = filter(lambda x: self.get_year(x['href']) > self.start_yr, self.links)
         fns = map(lambda x: UpdateManager.get_filename(x['href']), ls)
         links_for_fns = {}
         for link in ls:
