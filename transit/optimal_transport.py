@@ -3,6 +3,7 @@ from scipy.optimize import linprog
 import numpy as np
 np.set_printoptions(threshold=1000)
 
+
 def construct_grad_matrix(edges, vertices):
     """
     :param edges: a numpy matrix of size |E| x 2 containing (source,target) pairs

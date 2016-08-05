@@ -6,10 +6,11 @@ from subprocess import call
 
 
 class UpdateManager(object):
-    def __init__(self, start_yr=14, url="http://web.mta.info/developers/turnstile.html"):
+    def __init__(self, start_yr=14, url="http://web.mta.info/developers/turnstile.html", data_dir="mta_data"):
         self.list_url = url
         self.start_yr = start_yr
         self.links = UpdateManager.__read_page(url)
+        self.data_dir = data_dir
 
     @staticmethod
     def __read_page(url):
@@ -27,24 +28,34 @@ class UpdateManager(object):
     def get_filename(href_str):
         return href_str.split("/")[-1]
 
-    @staticmethod
-    def clean_empties():
-        for f in os.listdir("turnstile_data"):
-            fp = "turnstile_data/" + f
+    def clean_empties(self):
+        for f in os.listdir(self.data_dir):
+            fp = self.data_dir + f
             if ".gz" != fp[-3:]:
                 os.system("rm " + fp)
 
-    def synch_dir(self):
+    def synch_turnstiles(self):
         ls = filter(lambda x: self.get_year(x['href']) > self.start_yr, self.links)
         fns = map(lambda x: UpdateManager.get_filename(x['href']), ls)
         links_for_fns = {}
         for link in ls:
             links_for_fns[UpdateManager.get_filename(link['href'])] = link['href']
-        files = os.listdir("turnstile_data")
+        files = os.listdir(self.data_dir)
         diff = set(fns) - set([f.replace(".gz", "") for f in files])
         for d in diff:
-            dl_call = "wget -O turnstile_data/{0} http://web.mta.info/developers/{1}".format(d, links_for_fns[d])
-            compress_call = "gzip turnstile_data/" + d
+            dl_call = "wget -O {0}/{1} http://web.mta.info/developers/{2}".format(self.data_dir, d, links_for_fns[d])
+            compress_call = "gzip {0}/".format(self.data_dir) + d
             call(dl_call.split(" "))
             call(compress_call.split(" "))
 
+    def synch_locations(self):
+        dl_call = "wget -O {0}/StationEntrances.csv " \
+                  "http://web.mta.info/developers/data/nyct/subway/StationEntrances.csv".format(self.data_dir)
+        call(dl_call.split(" "))
+
+    def synch_gtfs(self):
+        dl_call = "wget -O {0}/google_transit.zip " \
+                  "http://web.mta.info/developers/data/nyct/subway/google_transit.zip".format(self.data_dir)
+        unzip_call = "unzip {0}/google_transit.zip -d {0}/google_transit".format(self.data_dir)
+        call(dl_call.split(" "))
+        call(unzip_call.split(" "))
