@@ -7,3 +7,4 @@ update_manager.synch_locations()
 update_manager.synch_gtfs()
 
 
+

@@ -6,10 +6,16 @@ from subprocess import call
 
 
 class UpdateManager(object):
-    def __init__(self, start_yr=14, url="http://web.mta.info/developers/turnstile.html", data_dir="mta_data"):
+    def __init__(self, start_yr=14, url="http://web.mta.info/developers/turnstile.html", data_dir=None):
         self.list_url = url
         self.start_yr = start_yr
         self.links = UpdateManager.__read_page(url)
+        if data_dir is None:
+            data_dir = os.path.dirname(os.path.abspath(__file__)) + "/mta_data"
+        else:
+            print "using custom data directory: " + data_dir
+        if not os.path.isdir(data_dir):
+            os.makedirs(data_dir)
         self.data_dir = data_dir
 
     @staticmethod
