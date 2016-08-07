@@ -5,6 +5,7 @@ from geopy.distance import great_circle
 from station_locations import StationLocationReader
 from utils import default_data_dir, debug
 import pandas as pd
+import platform
 import numpy as np
 
 
@@ -98,7 +99,9 @@ class TopologyReader(object):
         odd_pairs = pd.concat([odds2.target.map(get_parent), evens2.source.map(get_parent),
                                evens2.source_arrival, odds2.target_arrival], axis=1)
 
-        to_mins = lambda x: x.seconds / 60 if not pd.isnull(x) else np.nan
+        to_mins_remote = lambda x: x.seconds / 60 if not pd.isnull(x) else np.nan
+        to_mins_local = lambda x: x.astype('timedelta64[m]').astype(float)
+        to_mins = to_mins_local if platform.system() == "Darwin" else to_mins_remote
         odd_pairs["travel_time"] = (odd_pairs.source_arrival - odd_pairs.target_arrival).apply(to_mins)
         even_pairs["travel_time"] = (even_pairs.target_arrival - even_pairs.source_arrival).apply(to_mins)
         out = pd.concat([even_pairs, odd_pairs])
