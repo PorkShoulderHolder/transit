@@ -1,6 +1,6 @@
 __author__ = 'sam.royston'
 from turnstile_synch import UpdateManager
-from transit import transit
+from transport import transit
 
 update_manager = UpdateManager(start_yr=15)
 update_manager.synch_turnstiles()
