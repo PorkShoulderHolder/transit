@@ -2,7 +2,6 @@ __author__ = 'sam.royston'
 from flask import Flask, render_template
 import csv
 import json
-
 app = Flask(__name__)
 
 """
@@ -11,7 +10,7 @@ util file functions
 
 
 def get_connections():
-    with open("../data/cleaned_connections.csv") as f:
+    with open("../transit/processed_data/connections_normal_w_limits.csv") as f:
         fieldnames = ("source", "target", "flow", "travel_time")
         reader = csv.DictReader(f)
         out = [row for row in reader]
@@ -19,7 +18,7 @@ def get_connections():
 
 
 def get_stations():
-    with open("../data/cleaned_nodes.csv") as f:
+    with open("../transit/processed_data/nodesnormal_w_limits.csv") as f:
         fieldnames = ("Id", "latitude", "longitude", "Label", "prices")
         reader = csv.DictReader(f)
         out = {}
