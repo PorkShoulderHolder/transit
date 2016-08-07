@@ -22,7 +22,7 @@ class UpdateManager(object):
     @staticmethod
     def __read_page(url):
         page = urllib.urlopen(url)
-        soup = BeautifulSoup(page.read())
+        soup = BeautifulSoup(page.read(), "html.parser")
         section = soup.find('div', class_="span-84 last")
         links = section.find_all('a')
         return links
