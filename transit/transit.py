@@ -1,69 +1,31 @@
 __author__ = 'sam.royston'
 from optimal_transport import compute, compute_costs
-from data_munge.postprocessing import add_transfer_edges, package_input
+from mta.postprocessing import add_transfer_edges, package_input
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from data_munge.subway_topology import get_topology
+from mta.subway_topology import TopologyReader
+from mta.turnstiles import TurnstileReader
+from mta.constants import BQX_conns, TRIBORO_conns
+import os
+
+DEFAULT_STORAGE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/processed_data"
 
 
-def switch_src_target(df):
-    df.source[len(df)/2:] = df.target[len(df)/2:]
-    df.target[len(df)/2:] = df.source[:len(df)/2]
-    return df
-
-# 86 mins total
-BQX_conns = np.array([
-    ["R41", "R36", 12.0, 0, 0],
-    ["R36", "231", 21.0, 0, 0],
-    ["231", "A40", 6.0, 0, 0],
-    ["A40", "F18", 7.0, 0, 0],
-    ["F18", "L08", 15.0, 0, 0],
-    ["L08", "G26", 6.0, 0, 0],
-    ["G26", "F09", 7.0, 0, 0],
-    ["F09", "G24", 6.0, 0, 0],
-    ["G24", "R04", 6.0, 0, 0]
-])
-BQX_conns = pd.DataFrame(np.vstack((BQX_conns,BQX_conns)),
-                         columns=["source", "target", "travel_time", "distance", "is_transfer"])
-BQX_conns = switch_src_target(BQX_conns)
-# 98 mins total
-TRIBORO_conns = np.array(
-[
-    ["613", "R01", 12.0, 0, 0],
-    ["221", "R01", 11.0, 0, 0],
-    ["R01", "G14", 9.0, 0, 0],
-    ["G14", "M01", 8.0, 0, 0],
-    ["M01", "L20", 8.0, 0, 0],
-    ["L20", "L24", 6.0, 0, 0],
-    ["L24", "L26", 5.0, 0, 0],
-    ["L26", "254", 2.0, 0, 1],
-    ["254", "247", 12.0, 0, 0],
-    ["247", "D32", 5.0, 0, 0],
-    ["D32", "F31", 5.0, 0, 0],
-    ["F31", "N04", 6.0, 0, 0],
-    ["N04", "B16", 2.0, 0, 1],
-    ["B16", "R41", 7.0, 0, 0]
-])
-TRIBORO_conns = pd.DataFrame(np.vstack((TRIBORO_conns, TRIBORO_conns)),
-                             columns=["source", "target", "travel_time", "distance", "is_transfer"])
-
-TRIBORO_conns = switch_src_target(TRIBORO_conns)
+def get_topology():
+    ts_reader = TurnstileReader(verbose=True)
+    topo_reader = TopologyReader()
+    final_stops_data = topo_reader.merge_turnstile_info(ts_reader)
+    return final_stops_data, topo_reader.travel_times
 
 
-def compute_flows(nodes, edges, with_limits=None, directional_bounds=None, bounds=None, record=True):
+def compute_flows(nodes, edges, with_limits=None, directional_bounds=None):
     es, vs, costs, pr, er, exr = package_input(nodes, edges)
     if with_limits is not None:
         res, constraints = compute(es.transpose(), vs, costs, pr, entries=er,
-            exits=exr, move_bounds=directional_bounds, bounds=bounds)
+            exits=exr, move_bounds=directional_bounds)
     else:
-        res, constraints = compute(es.transpose(), vs, costs, pr, move_bounds=directional_bounds, bounds=bounds)
-    if record:
-        with open("data/" + constraints + "_log.txt", "w+") as f:
-            f.write(str(res) + "\n")
-            f.write("flow sum: " + str(np.sum(res.x)) + "\n")
-            f.write("flow max: " + str(np.max(res.x)) + "\n")
-            f.write("flow dist: " + str(res.x.tolist()))
+        res, constraints = compute(es.transpose(), vs, costs, pr)
     return res, constraints
 
 
@@ -72,41 +34,31 @@ def compute_prices(nodes, edges):
     res = compute_costs(es.transpose(), vs, costs, pr)
     return res.x
 
-i = 0
 
-
-def burn_csvs(with_limits=None, directional_bounds=None, bounds=None, hypo=None):
-    nodes, edges = get_topology()
-
+def burn_csvs(nodes, edges, with_limits=None, hypo=None, storage_dir=DEFAULT_STORAGE_DIR, name=""):
     complete_edges = add_transfer_edges(nodes, edges)
-    if hypo is not None:
-        complete_edges = pd.concat((complete_edges, hypo))
+    complete_edges = pd.concat((complete_edges, hypo)) if hypo is not None else complete_edges
     complete_edges = complete_edges.drop_duplicates()
-    print "computing optimal flows"
-    res, constraints = compute_flows(nodes, complete_edges, with_limits, directional_bounds, bounds=bounds)
+    res, constraints = compute_flows(nodes, complete_edges, with_limits)
     flows = res.x
     prices = compute_prices(nodes, complete_edges)
     complete_edges["flow"] = flows
     nodes["prices"] = prices
-    print "saving to data/connections_" + constraints + ".csv"
-    complete_edges.to_csv("data/connections_" + constraints + str(++i) + ".csv", index=False)
-    nodes.to_csv("data/nodes.csv")
-
+    complete_edges.to_csv("{0}/connections_{1}".format(storage_dir, name) + ".csv", index=False)
+    nodes.to_csv("{0}/nodes{1}.csv".format(storage_dir, name))
     es, vs, costs, pr, er, exr = package_input(nodes, complete_edges)
     costs = costs.astype(float)
-    print costs
-    print costs * flows
-
     return flows, prices, constraints, costs
 
 
 def run_opts():
-    f1, p1, c1, cc = burn_csvs(with_limits=True)
-    f2, p2, c2, ccc = burn_csvs(with_limits=True, hypo=BQX_conns)
-    f3, p3, c3, cccc = burn_csvs(with_limits=True, hypo=TRIBORO_conns)
-    f4, p4, c4, costs = burn_csvs()
-    f5, p5, c5, costs1 = burn_csvs(hypo=BQX_conns)
-    f6, p6, c6, costs2 = burn_csvs(hypo=TRIBORO_conns)
+    nodes, edges = get_topology()
+    f1, p1, c1, cc = burn_csvs(nodes, edges, with_limits=True, name="normal_w_limits")
+    f2, p2, c2, ccc = burn_csvs(nodes, edges, with_limits=True, hypo=BQX_conns, name="BQX_w_limits")
+    f3, p3, c3, cccc = burn_csvs(nodes, edges, with_limits=True, hypo=TRIBORO_conns, name="TRIBORO_w_limits")
+    f4, p4, c4, costs = burn_csvs(nodes, edges, name="normal_wo_limits")
+    f5, p5, c5, costs1 = burn_csvs(nodes, edges, hypo=BQX_conns, name="BQX_wo_limits")
+    f6, p6, c6, costs2 = burn_csvs(nodes, edges, hypo=TRIBORO_conns, name="TRIBORO_wo_limits")
 
     if __name__ == "__main__":
         l = len(np.sort(f1 * cc))
