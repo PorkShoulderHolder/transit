@@ -63,7 +63,7 @@ a {
 
     }
 }
-@media all and (max-width : 800px) {
+@media all and (max-width : 1100px) {
     .button{
         font-size: 102px;
         width:100%;

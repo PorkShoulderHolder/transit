@@ -1,5 +1,5 @@
 __author__ = 'sam.royston'
-from flask import Flask, render_template
+from flask import Flask, send_from_directory, render_template
 import csv
 import json
 app = Flask(__name__)
@@ -40,6 +40,10 @@ cache = init_cache()
 @app.route("/")
 def splash():
     return render_template("index.html")
+
+@app.route("/learn")
+def learn():
+    return send_from_directory("static","optimal_transport.html")
 
 @app.route("/map")
 def show_map():
