@@ -4,6 +4,7 @@ import csv
 import json
 app = Flask(__name__)
 import os
+import platform
 """
 util file functions
 """
@@ -12,7 +13,7 @@ PROC_DATA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/
 
 
 def get_connections():
-    with open(PROC_DATA_DIR + "/connections_basic0.csv") as f:
+    with open(PROC_DATA_DIR + "/connections_normal_wo_limits.csv") as f:
         fieldnames = ("source", "target", "flow", "travel_time")
         reader = csv.DictReader(f)
         out = [row for row in reader]
@@ -20,7 +21,7 @@ def get_connections():
 
 
 def get_stations():
-    with open(PROC_DATA_DIR + "/nodesnormal_w_limits.csv") as f:
+    with open(PROC_DATA_DIR + "/nodesnormal_wo_limits.csv") as f:
         fieldnames = ("Id", "latitude", "longitude", "Label", "prices")
         reader = csv.DictReader(f)
         out = {}
@@ -54,4 +55,5 @@ def flow_data():
     return cache
 
 if __name__ == '__main__':
-    app.run(port=5353, debug=True, host="0.0.0.0")
+    debug = True if platform.system() == "Darwin" else False
+    app.run(port=5353, debug=debug, host="0.0.0.0")
