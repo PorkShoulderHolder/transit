@@ -1,5 +1,27 @@
 var StationsGroup = function(stations){
     this.stations = stations;
+    this.active = false;
+    this.entrances_actice = false;
+}
+
+StationsGroup.prototype.show_stations_on = function(map){
+    map.setLayoutProperty('stations', 'visibility', 'visible');
+    this.active = true;
+}
+
+StationsGroup.prototype.hide_stations_on = function(map){
+    map.setLayoutProperty('stations', 'visibility', 'none');
+    this.active = false;
+}
+
+StationsGroup.prototype.show_entrances_on = function(map){
+    map.setLayoutProperty('entrances', 'visibility', 'visible');
+    this.entrances_active = true;
+}
+
+StationsGroup.prototype.hide_entrances_on = function(map){
+    map.setLayoutProperty('entrances', 'visibility', 'none');
+    this.entrances_active = false;
 }
 
 StationsGroup.prototype.locations = function(){

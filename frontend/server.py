@@ -44,7 +44,7 @@ def splash():
 
 @app.route("/learn")
 def learn():
-    return send_from_directory("static","optimal_transport.html")
+    return render_template("optimal_transport.html")
 
 @app.route("/map")
 def show_map():

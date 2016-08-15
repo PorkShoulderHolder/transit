@@ -12,6 +12,11 @@ a {
     display:inline-block;
 }
 
+.bottom{
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+}
 
 .linkname{
     float:left;
@@ -19,7 +24,7 @@ a {
 
 
 .description{
-    height:80px;
+    height:67px;
 
     float:left;
     bottom: 0px;

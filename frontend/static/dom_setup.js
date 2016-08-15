@@ -1,7 +1,19 @@
-$('#sidebar-bottom').sidebar({side: 'bottom'});
+// $('#sidebar-bottom').sidebar({side: 'bottom'});
+var Controls = React.createClass({
+  render: function(){
+    return (
+      <div className="controls">
+        <a href="#" id="flows" className="button">congestion</a>
+        <a href="#" id="stations" className="button">stations</a>
+        <a href="#" id="entrances" className="button">entrances</a>
+      </div>
+      )
+  }
+});
+
 var SidebarBottom = React.createClass({
     getInitialState: function() {
-    	return {data: {Label:"Chambers st_ACE", Line:"BWAY", Division:"IRT"}};
+    	return {data: {Label:"Station Data", Line:"gravy", Division:"IRT", ENTRIES:0, EXITS:0}};
   	},
   	componentWillMount: function(){
   		set_highlight = (data) => {
@@ -12,7 +24,8 @@ var SidebarBottom = React.createClass({
     	var info = this.state.data.Label.split('_');
         return (
         	<div className="container">
-	          <div className="text">
+	          <Controls />
+            <div className="text">
               <div className="heading">
   	        		{info[0]}
   	      		</div>
@@ -24,11 +37,17 @@ var SidebarBottom = React.createClass({
             </div>
             <div className="infographics">
               <div className="knob">
+                 <div className="label">Morning entries</div>
 	      		     <input type="text" value={this.state.data.ENTRIES} className="dial" ></input>
               </div>
               <div className="knob">
+                 <div className="label">Evening entries</div>
                  <input type="text" value={this.state.data.EXITS} className="dial"></input>
       		    </div>
+            </div>
+            <div className="info">
+              <i className="fa fa-question-circle-o" style={{"font-size":"24px", "margin":"8px"}}></i>
+              blach the don is gonna kill u
             </div>
           </div>
         )
@@ -36,4 +55,10 @@ var SidebarBottom = React.createClass({
 });
 
 
+
 ReactDOM.render(<SidebarBottom />, document.getElementById('sidebar-bottom'));
+
+Waves.attach('.button', ['waves-button']);
+Waves.init();
+$(".waves-button").css("padding",".6em .6em");
+
