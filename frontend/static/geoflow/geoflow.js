@@ -84,6 +84,7 @@ var FlowSystem = function(paths){
     this.last_update = new Date;
     this.t = 0;
     this.speed = 1;
+    this.animation_id = undefined;
 }
 
 FlowSystem.prototype.update = function(){
@@ -101,4 +102,63 @@ FlowSystem.prototype.update = function(){
     this.last_update = new Date;
     this.positions = pos;
 }
+
+FlowSystem.prototype.flow_animation_func = function(){
+    this.update();
+    var coordinates = this.positions;
+    return {
+        "type": "MultiPoint",
+        "coordinates":coordinates
+    };
+}
+
+FlowSystem.prototype.setup_flows_on = function(map){
+    map.addSource('flows', {
+        "type": "geojson",
+        "data": this.flow_animation_func()
+    });
+
+    map.addLayer({
+        "id": "flows",
+        "source": "flows",
+        "type": "circle",
+        "paint": {
+            "circle-radius":  {"stops": [[10, 1], [12, 2],  [14, 3], [15, 3], [16, 5], [17, 7], [18, 9]]},
+            "circle-color": "#dd7c33",
+            "circle-opacity": {"stops": [[10, 0.4], [18, 0.9]]}
+        }
+    });
+}
+
+FlowSystem.prototype.stop_animation = function(){
+    if (this.animation_id) {
+        cancelAnimationFrame(this.animation_id);
+        this.animation_id = undefined;
+    }
+}
+
+FlowSystem.prototype.start_animation_on = function(map){
+    var self = this;
+    var _animate = function(){
+        map.getSource('flows').setData(self.flow_animation_func());
+        self.animation_id = requestAnimationFrame(_animate);
+    }
+    if(self.animation_id){
+        console.log("animation already running")
+    }
+    else{
+        _animate();
+    }
+}
+
+FlowSystem.prototype.hide = function(map){
+    map.setLayoutProperty('flows', 'visibility', 'none');
+    this.stop_animation();
+}
+
+FlowSystem.prototype.show_on = function(map){
+    this.start_animation_on(map);
+    map.setLayoutProperty('flows', 'visibility', 'visible');
+}
+
 

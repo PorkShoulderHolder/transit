@@ -10,19 +10,25 @@
 <link rel="stylesheet" href="static/main.css">
 <script   src="https://code.jquery.com/jquery-1.12.4.min.js"   integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="   crossorigin="anonymous"></script>
 <script src="static/backstretch.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sidebar/3.3.2/jquery.sidebar.min.js"></script>
+<div class="sidebar top">I am on top!</div>
 <script>
+  //  $(".sidebar.top").sidebar({side: "top"});
+   // $("#link1).click(function(e){
+    //    $(".sidebar.top").sidebar().trigger("sidebar:open");
+    //});
     $.backstretch("https://timedotcom.files.wordpress.com/2014/09/christopher-morris-nyc-subway-1981-02.jpg?quality=50&strip=color&w=1200");
 </script>
 <div class="bottom">
     <div class="button" id="link1">
-        <a href="google.com">
+        <div>
             <div class="linkname">
                 Download
             </div>
             <div class="description d1">
                 massively cleaned and consolidated per-station MTA data, along with the full subway network topology.
             </div>
-        </a>
+        </div>
     </div>
     <div class="button" id="link2">
         <a href="map">
@@ -45,5 +51,6 @@
         </a>
     </div>
 </div>
+
 </body>
 </html>

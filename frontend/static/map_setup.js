@@ -8,7 +8,9 @@ var map = new mapboxgl.Map({
 });
 
 var radius = 20;
-
+var station_group = undefined;
+var transit_flows = undefined;
+var set_highlight = undefined;
 var lastLoop = new Date;
 function gameLoop() {
     var thisLoop = new Date;
@@ -17,71 +19,6 @@ function gameLoop() {
     //console.log(fps);
 }
 
-function setup_flows(ff){
-    map.addSource('flows', {
-        "type": "geojson",
-        "data": ff(0)
-    });
-
-    map.addLayer({
-        "id": "flows",
-        "source": "flows",
-        "type": "circle",
-        "paint": {
-            "circle-radius":  {"stops": [[10, 1], [12, 2],  [14, 3], [15, 3], [16, 5], [17, 7], [18, 9]]},
-            "circle-color": "#dd7c33",
-            "circle-opacity": {"stops": [[10, 0.4], [18, 0.9]]}
-        }
-    });
-}
-
-function add_stations(station_group){
-    var size_multiplier = 4;
-    map.addSource('stations', {
-        "type": "geojson",
-        "data": {
-            "type": "MultiPoint",
-            "coordinates":station_group.locations()
-        }
-    });
-
-    map.addLayer({
-        "id": "stations",
-        "source": "stations",
-        "type": "circle",
-        "paint": {
-            "circle-radius":  {"stops": [[10, size_multiplier * 1],
-            [12, size_multiplier * 2], [14, size_multiplier * 3], [15, size_multiplier * 3], [16, size_multiplier * 5],
-            [17, size_multiplier * 7], [18, size_multiplier * 9]]},
-            "circle-color": "#007c33",
-            "circle-opacity": {"stops": [[10, 0.4], [18, 0.9]]}
-        }
-    });
-}
-
-function add_entrances(station_group){
-    var size_multiplier = 1;
-    map.addSource('entrances', {
-        "type": "geojson",
-        "data": {
-            "type": "MultiPoint",
-            "coordinates":station_group.entrances()
-        }
-    });
-
-    map.addLayer({
-        "id": "entrances",
-        "source": "entrances",
-        "type": "circle",
-        "paint": {
-            "circle-radius":  {"stops": [[10, size_multiplier * 1],
-            [12, size_multiplier * 2], [14, size_multiplier * 3], [15, size_multiplier * 3], [16, size_multiplier * 5],
-            [17, size_multiplier * 7], [18, size_multiplier * 9]]},
-            "circle-color": "#ff0033",
-            "circle-opacity": {"stops": [[10, 0.4], [18, 0.9]]}
-        }
-    });
-}
 
 
 
@@ -92,33 +29,40 @@ map.on('load', function () {
         var paths = clean_paths(json_d);
         var stations = clean_stations(json_d);
 
-        var station_group = new StationsGroup(stations);
-        var transit_flows = new FlowSystem(paths);
+        station_group = new StationsGroup(stations);
+        transit_flows = new FlowSystem(paths);
 
-        function flow_animate(angle) {
-            transit_flows.update();
-            var coordinates = transit_flows.positions;
-            return {
-                "type": "MultiPoint",
-                "coordinates":coordinates
-            };
-        }
-
-//        add_stations(station_group);
-//        add_entrances(station_group);
-        setup_flows(flow_animate);
-
-        function animateMarker(timestamp) {
-            fdata = flow_animate(timestamp / 1000);
-            map.getSource('flows').setData(fdata);
-            gameLoop();
-            requestAnimationFrame(animateMarker);
-        }
+        station_group.add_stations(map);
+        // station_group.add_entrances(map);
+        // transit_flows.setup_flows_on(map);
+        // transit_flows.start_animation_on(map);
+        console.log(station_group.features())
         map.on('zoom', function () {
             transit_flows.speed = (21.0 - map.transform.zoom) * 0.1 - 0.098;
             console.log(transit_flows.speed);
         });
-        animateMarker(0);
-    });
+        map.on("click", function(e){
+            var features = map.queryRenderedFeatures(e.point, { layers: ["stations"] });
+            if (features.length) {
+                map.setFilter("station_highlight", ["==", "name", features[0].properties.name]);
+                var meta = station_group.stations[parseInt(features[0].properties.name)];
+                set_highlight(meta.stats);
+                $(".dial").knob({
+                    "max":"600000", 
+                    "height":100, 
+                    "width":100, 
+                    "thickness":0.1,
+                    "readOnly":true, 
+                    "fgColor":"#000000",
+                    "fontSize":16,
+                    "font":"Montserrat"
+                });
 
+                $(".dial").trigger('change');
+                $(".dial").css("font-size",15);
+                $('#sidebar-bottom').trigger("sidebar:open");
+
+            }
+        });
+    });
 });
