@@ -1,3 +1,4 @@
 #!/bin/sh
-source bin/activate
+source /home/ubuntu/transit/bin/activate
+cd /home/ubuntu/transit/
 python run.py
