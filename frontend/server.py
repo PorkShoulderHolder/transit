@@ -1,5 +1,5 @@
 __author__ = 'sam.royston'
-from flask import Flask, render_template
+from flask import Flask, send_from_directory, render_template
 import csv
 import json
 app = Flask(__name__)
@@ -42,6 +42,10 @@ cache = init_cache()
 def splash():
     return render_template("index.html")
 
+@app.route("/learn")
+def learn():
+    return send_from_directory("static","optimal_transport.html")
+
 @app.route("/map")
 def show_map():
     return render_template("map.html")
@@ -52,4 +56,4 @@ def flow_data():
 
 if __name__ == '__main__':
     debug = True if platform.system() == "Darwin" else False
-    app.run(port=5353, debug=True, host="0.0.0.0")
+    app.run(port=5353, debug=debug, host="0.0.0.0")

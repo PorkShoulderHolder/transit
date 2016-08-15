@@ -11,3 +11,5 @@ gexdat.egg-info
 data
 turnstile_data
 mta_data
+.ipynb_checkpoints/
+*.ipynb
