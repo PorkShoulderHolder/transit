@@ -24,6 +24,8 @@ var SidebarBottom = React.createClass({
     	var info = this.state.data.Label.split('_');
         return (
         	<div className="container">
+            <div className="info">
+            </div>
 	          <Controls />
             <div className="text">
               <div className="heading">
@@ -45,10 +47,7 @@ var SidebarBottom = React.createClass({
                  <input type="text" value={this.state.data.EXITS} className="dial"></input>
       		    </div>
             </div>
-            <div className="info">
-              <i className="fa fa-question-circle-o" style={{"font-size":"24px", "margin":"8px"}}></i>
-              blach the don is gonna kill u
-            </div>
+            
           </div>
         )
     }

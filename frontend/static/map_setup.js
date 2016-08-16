@@ -66,11 +66,35 @@ map.on('load', function () {
                 // $('#sidebar-bottom').trigger("sidebar:open");
             }
         });
+        $("#stations").hover(
+            function(){
+                $(".info").html(
+                    "<i class='fa fa-question-circle-o' style='font-size:24px; margin-right:8px; display:inline'></i>" + 
+                    "<div style='display:inline'>Click on stations on the map to show turnstile data</div>"
+                );
+            }, 
+            function(){
+                $(".info").html("");
+            }
+        );
+
+        $("#flows").hover(
+            function(){
+                $(".info").html(
+                    "<i class='fa fa-question-circle-o' style='font-size:24px; margin-right:8px; display:inline'></i>" +
+                    "<div style='display:inline'>The number of dots for each track segment is proportional to the minimum cost ridership " + 
+                    "suggested by the turnstile data</div>"
+                );
+            }, 
+            function(){
+                $(".info").html("");
+            }
+        );
+
         $("#flows").on('click', function(e){
             if (transit_flows.animation_id){
                 $("#flows").css("color","black");
                 $("#flows").css("background","#dddddd");
-
                 transit_flows.hide(map);
             } 
             else{

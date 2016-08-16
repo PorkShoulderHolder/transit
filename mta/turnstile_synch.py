@@ -45,7 +45,7 @@ class UpdateManager(object):
 
     def clean_empties(self):
         for f in os.listdir(self.data_dir):
-            fp = self.data_dir + f
+            fp = self.data_dir + "/" + f
             if ".gz" != fp[-3:]:
                 os.system("rm " + fp)
 
