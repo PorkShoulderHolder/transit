@@ -29,11 +29,10 @@ class UpdateManager(object):
 
     @staticmethod
     def get_most_recent(data_dir):
-        print data_dir
         files = filter(lambda x: "turnstile_" in x, os.listdir(data_dir))
         files_dates = zip(files, [f.split("_")[-1][:6] for f in files])
         files_dates = sorted(files_dates, key=lambda x: x[1], reverse=True)
-        return data_dir + "/" + files_dates[0][0]
+        return data_dir + "/" + 
 
     @staticmethod
     def get_year(href_str):

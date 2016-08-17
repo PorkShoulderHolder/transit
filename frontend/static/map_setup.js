@@ -11,6 +11,7 @@ var radius = 20;
 var station_group = undefined;
 var transit_flows = undefined;
 var set_highlight = undefined;
+var set_update_date = undefined;
 var set_info = undefined;
 var lastLoop = new Date;
 function gameLoop() {
@@ -35,13 +36,15 @@ map.on('load', function () {
         "fontSize":16,
         "font":"Montserrat"
     });
-    $("#sidebar-bottom").css("display","block")
+    $("#sidebar-bottom").css("display","block");
+    $("#sidebar-top").css("display","block")
+
 
     $.get("flowdata", function(d){
         var json_d = JSON.parse(d);
         var paths = clean_paths(json_d);
         var stations = clean_stations(json_d);
-
+        var active_date = json_d.last_updated;
         station_group = new StationsGroup(stations);
         transit_flows = new FlowSystem(paths);
 
@@ -49,12 +52,20 @@ map.on('load', function () {
         station_group.add_entrances(map);
         transit_flows.setup_flows_on(map);
         transit_flows.hide(map);
-        station_group.hide_stations_on(map);
+        station_group.show_stations_on(map);
         station_group.hide_entrances_on(map);
+        set_update_date(active_date);
+
         map.on('zoom', function () {
             transit_flows.speed = (21.0 - map.transform.zoom) * 0.1 - 0.098;
         });
-
+        var meta = station_group.stations[269];
+        $("#stations").css("color","whitesmoke");
+        $("#stations").css("background","#18c8ca");
+        map.setFilter("station_highlight", ["==", "name", "269"]);
+        set_highlight(meta.stats);
+        $(".dial").trigger('change');
+        $(".dial").css("font-size",15); 
         map.on("click", function(e){
             var features = map.queryRenderedFeatures(e.point, { layers: ["stations"] });
             if (features.length) {
@@ -69,8 +80,8 @@ map.on('load', function () {
         $("#stations").hover(
             function(){
                 $(".info").html(
-                    "<i class='fa fa-question-circle-o' style='font-size:24px; margin-right:8px; display:inline'></i>" + 
-                    "<div style='display:inline'>Click on stations on the map to show turnstile data</div>"
+                    "<i class='fa fa-question-circle-o' style='font-size:18px; margin-right:5px; display:inline'></i>" + 
+                    "<div style='display:inline'>Click a station on the map to show turnstile data</div>"
                 );
             }, 
             function(){
@@ -81,7 +92,7 @@ map.on('load', function () {
         $("#flows").hover(
             function(){
                 $(".info").html(
-                    "<i class='fa fa-question-circle-o' style='font-size:24px; margin-right:8px; display:inline'></i>" +
+                    "<i class='fa fa-question-circle-o' style='font-size:18px; margin-right:5px; display:inline'></i>" +
                     "<div style='display:inline'>The number of dots for each track segment is proportional to the minimum cost ridership " + 
                     "suggested by the turnstile data</div>"
                 );

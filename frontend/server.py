@@ -5,11 +5,13 @@ import json
 app = Flask(__name__)
 import os
 import platform
+import calendar
 """
 util file functions
 """
 
 PROC_DATA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/transport/processed_data"
+RAW_DATA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/mta/mta_data"
 
 
 def get_connections():
@@ -29,11 +31,21 @@ def get_stations():
             out[row["Id"]] = row
         return out
 
+def get_readable_date():
+    files = filter(lambda x: "turnstile_" in x, os.listdir(RAW_DATA_DIR))
+    files_dates = zip(files, [f.split("_")[-1][:6] for f in files])
+    files_dates = sorted(files_dates, key=lambda x: x[1], reverse=True)
+    active_ts_file = files_dates[0][0]
+    day = str(int(active_ts_file[-9:-7]))
+    month = calendar.month_name[int(active_ts_file[-11:-9])]
+    year = "20" + active_ts_file[-13:-11]
+    return "{0} {1}, {2}".format(month, day, year)
 
 def init_cache():
     stations = get_stations()
     lines = get_connections()
-    return json.dumps({"nodes": stations, "edges": lines})
+    last_update = get_readable_date()
+    return json.dumps({"nodes": stations, "edges": lines, "last_updated":last_update})
 
 print "initializing cache"
 cache = init_cache()
